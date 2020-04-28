@@ -11,11 +11,14 @@ variable "region" {
     default = "us-east-1"
 }
 
-# TODO: support multiple availability zones, and default to it.
-variable "availability_zone" {
-    description = "The availability zone"
-    default = "us-east-1a"
+variable "availbility_zones_cidr_map" {
+    type = map(string)
+    default = {
+    "us-east-1a" = "10.0.1.0/24"
+    "us-east-1b" = "10.0.2.0/24"
+  }
 }
+
 
 variable "ecs_cluster_name" {
     description = "The name of the Amazon ECS cluster."

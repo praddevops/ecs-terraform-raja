@@ -4,45 +4,57 @@ provider "aws" {
     region = "${var.region}"
 }
 
-resource "aws_key_pair" "alex" {
-    key_name = "alex-key"
+locals {
+    availability_zones = "${keys(var.availbility_zones_cidr_map)}"
+    az_cidr_blocks = "${values(var.availbility_zones_cidr_map)}"
+}
+
+resource "aws_key_pair" "ec2-user" {
+    key_name = "ec2-user-key"
     public_key = "${file(var.ssh_pubkey_file)}"
 }
 
-resource "aws_vpc" "main" {
+resource "aws_vpc" "ecs_cluster_vpc" {
     cidr_block = "10.0.0.0/16"
     enable_dns_hostnames = true
 }
 
 resource "aws_route_table" "external" {
-    vpc_id = "${aws_vpc.main.id}"
+    vpc_id = "${aws_vpc.ecs_cluster_vpc.id}"
     route {
         cidr_block = "0.0.0.0/0"
-        gateway_id = "${aws_internet_gateway.main.id}"
+        gateway_id = "${aws_internet_gateway.ecs_cluster_vpc.id}"
     }
 }
 
-resource "aws_route_table_association" "external-main" {
-    subnet_id = "${aws_subnet.main.id}"
+resource "aws_route_table_association" "external-ecs_cluster_vpc" {
+    count = "${
+              length(local.availability_zones) > 0 ? length(local.availability_zones) : 0
+            }"
+
+    subnet_id = "${aws_subnet.main.*.id[count.index]}"
     route_table_id = "${aws_route_table.external.id}"
 }
 
 # TODO: figure out how to support creating multiple subnets, one for each
 # availability zone.
 resource "aws_subnet" "main" {
-    vpc_id = "${aws_vpc.main.id}"
-    cidr_block = "10.0.1.0/24"
-    availability_zone = "${var.availability_zone}"
+    count = "${
+              length(local.availability_zones) > 0 ? length(local.availability_zones) : 0
+            }"
+    vpc_id = "${aws_vpc.ecs_cluster_vpc.id}"
+    cidr_block = "${local.az_cidr_blocks[count.index]}"
+    availability_zone = "${local.availability_zones[count.index]}"
 }
 
-resource "aws_internet_gateway" "main" {
-    vpc_id = "${aws_vpc.main.id}"
+resource "aws_internet_gateway" "ecs_cluster_vpc" {
+    vpc_id = "${aws_vpc.ecs_cluster_vpc.id}"
 }
 
 resource "aws_security_group" "load_balancers" {
     name = "load_balancers"
     description = "Allows all traffic"
-    vpc_id = "${aws_vpc.main.id}"
+    vpc_id = "${aws_vpc.ecs_cluster_vpc.id}"
 
     # TODO: do we need to allow ingress besides TCP 80 and 443?
     ingress {
@@ -64,7 +76,7 @@ resource "aws_security_group" "load_balancers" {
 resource "aws_security_group" "ecs" {
     name = "ecs"
     description = "Allows all traffic"
-    vpc_id = "${aws_vpc.main.id}"
+    vpc_id = "${aws_vpc.ecs_cluster_vpc.id}"
 
     # TODO: remove this and replace with a bastion host for SSHing into
     # individual machines.
@@ -96,14 +108,13 @@ resource "aws_ecs_cluster" "main" {
 }
 
 resource "aws_autoscaling_group" "ecs-cluster" {
-    availability_zones = ["${var.availability_zone}"]
     name = "ECS ${var.ecs_cluster_name}"
     min_size = "${var.autoscale_min}"
     max_size = "${var.autoscale_max}"
     desired_capacity = "${var.autoscale_desired}"
     health_check_type = "EC2"
     launch_configuration = "${aws_launch_configuration.ecs.name}"
-    vpc_zone_identifier = ["${aws_subnet.main.id}"]
+    vpc_zone_identifier = "${aws_subnet.main.*.id}"
 }
 
 resource "aws_launch_configuration" "ecs" {
@@ -113,7 +124,7 @@ resource "aws_launch_configuration" "ecs" {
     security_groups = ["${aws_security_group.ecs.id}"]
     iam_instance_profile = "${aws_iam_instance_profile.ecs.name}"
     # TODO: is there a good way to make the key configurable sanely?
-    key_name = "${aws_key_pair.alex.key_name}"
+    key_name = "${aws_key_pair.ec2-user.key_name}"
     associate_public_ip_address = true
     user_data = "#!/bin/bash\necho ECS_CLUSTER='${var.ecs_cluster_name}' > /etc/ecs/ecs.config"
 }
@@ -144,5 +155,5 @@ resource "aws_iam_role_policy" "ecs_service_role_policy" {
 resource "aws_iam_instance_profile" "ecs" {
     name = "ecs-instance-profile"
     path = "/"
-    roles = ["${aws_iam_role.ecs_host_role.name}"]
+    role = "${aws_iam_role.ecs_host_role.name}"
 }
