@@ -4,6 +4,10 @@ This repo contains a set of [Terraform](https://terraform.io/) modules for
 provisioning an [AWS ECS](https://aws.amazon.com/ecs/) cluster and registering
 services with it.
 
+### Terraform version:
+* Terraform v0.12.24 + provider.aws v2.59.0
+
+
 ### If you want to onboard a new application on ECS, add a `<app-name>-service.tf` with services which describe containers you want to run and the corresponding task definition in task-definitions/ 
 
 
