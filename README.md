@@ -4,29 +4,21 @@ This repo contains a set of [Terraform](https://terraform.io/) modules for
 provisioning an [AWS ECS](https://aws.amazon.com/ecs/) cluster and registering
 services with it.
 
-If you want to use this, basically replace `services.tf` with services which
-describe containers you actually want to run.
+### If you want to onboard a new application on ECS, add a `<app-name>-service.tf` with services which describe containers you want to run and the corresponding task definition in task-definitions/ 
 
-There's still a handful of `TODO` comments, and it may not be 100% idiomatic
-Terraform or AWS.
 
-Right now this provisions _everything_, including its own VPC and related
-networking accoutrements. It does not handle setting up a Docker Registry. It
-does not do anything about attaching other AWS services (e.g. RDS) to a
-container.
+### Note: Right now this provisions _everything_, including its own VPC and related networking accoutrements. It does not handle setting up a Docker Registry. It does not do anything about attaching other AWS services (e.g. RDS) to a container.
+
+## Creating the cluster and service
+
+* Install Terroform on the local machine and follow the steps below (you must pass AWS_ACCESS_KEY_ID and SECRET_ACCESS_KEY). It is recommended to run `terraform plan` before `terraform apply`
+```
+$ terraform init
+$ terraform apply -var="aws_access_key=<AWS_ACCESS_KEY_ID>" -var="aws_secret_key=<SECRET_ACCESS_KEY>"
+```
 
 ## Deploying
 
-In addition to the Terraform modules, there is a script for doing deployments to
-ECS.
+To deploy a container application to the ECS service update the image in the corresponding app's task definition located in task-definitions/
 
-To execute a deployment:
-
-```console
-$ # Push a container to your docker registry
-$ python deploy/ecs-deploy.py deploy --cluster=<cluster> --service=<service> --image=<image>
-```
-
-It will then update the image being used by that service's task. ECS will handle
-updating the running containers. (Be aware that you must have as many EC2
-instances in the cluster as 2x the number of running tasks for your service.)
+A CICD pipeline is setup in https://github.com/praddevops/Jenkins-docker-ecs to build and deploy the image

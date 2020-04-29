@@ -9,11 +9,6 @@ locals {
     az_cidr_blocks = "${values(var.availbility_zones_cidr_map)}"
 }
 
-resource "aws_key_pair" "ec2-user" {
-    key_name = "ec2-user-key"
-    public_key = "${file(var.ssh_pubkey_file)}"
-}
-
 resource "aws_vpc" "ecs_cluster_vpc" {
     cidr_block = "10.0.0.0/16"
     enable_dns_hostnames = true
@@ -27,7 +22,7 @@ resource "aws_route_table" "external" {
     }
 }
 
-resource "aws_route_table_association" "external-ecs_cluster_vpc" {
+resource "aws_route_table_association" "external_ecs_cluster_vpc" {
     count = "${
               length(local.availability_zones) > 0 ? length(local.availability_zones) : 0
             }"
@@ -36,8 +31,7 @@ resource "aws_route_table_association" "external-ecs_cluster_vpc" {
     route_table_id = "${aws_route_table.external.id}"
 }
 
-# TODO: figure out how to support creating multiple subnets, one for each
-# availability zone.
+
 resource "aws_subnet" "main" {
     count = "${
               length(local.availability_zones) > 0 ? length(local.availability_zones) : 0
@@ -51,12 +45,11 @@ resource "aws_internet_gateway" "ecs_cluster_vpc" {
     vpc_id = "${aws_vpc.ecs_cluster_vpc.id}"
 }
 
-resource "aws_security_group" "load_balancers" {
+resource "aws_security_group" "load_balancers_security_group" {
     name = "load_balancers"
     description = "Allows all traffic"
     vpc_id = "${aws_vpc.ecs_cluster_vpc.id}"
 
-    # TODO: do we need to allow ingress besides TCP 80 and 443?
     ingress {
         from_port = 0
         to_port = 0
@@ -64,7 +57,6 @@ resource "aws_security_group" "load_balancers" {
         cidr_blocks = ["0.0.0.0/0"]
     }
 
-    # TODO: this probably only needs egress to the ECS security group.
     egress {
         from_port = 0
         to_port = 0
@@ -78,8 +70,6 @@ resource "aws_security_group" "ecs" {
     description = "Allows all traffic"
     vpc_id = "${aws_vpc.ecs_cluster_vpc.id}"
 
-    # TODO: remove this and replace with a bastion host for SSHing into
-    # individual machines.
     ingress {
         from_port = 0
         to_port = 0
@@ -91,7 +81,7 @@ resource "aws_security_group" "ecs" {
         from_port = 0
         to_port = 0
         protocol = "-1"
-        security_groups = ["${aws_security_group.load_balancers.id}"]
+        security_groups = ["${aws_security_group.load_balancers_security_group.id}"]
     }
 
     egress {
@@ -123,8 +113,6 @@ resource "aws_launch_configuration" "ecs" {
     instance_type = "${var.instance_type}"
     security_groups = ["${aws_security_group.ecs.id}"]
     iam_instance_profile = "${aws_iam_instance_profile.ecs.name}"
-    # TODO: is there a good way to make the key configurable sanely?
-    key_name = "${aws_key_pair.ec2-user.key_name}"
     associate_public_ip_address = true
     user_data = "#!/bin/bash\necho ECS_CLUSTER='${var.ecs_cluster_name}' > /etc/ecs/ecs.config"
 }

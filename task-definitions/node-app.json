@@ -1,7 +1,7 @@
 [
     {
-        "name": "test-http",
-        "image": "alexgaynor/test-http",
+        "name": "node-app",
+        "image": "raja678/tomcat:1.0",
         "cpu": 10,
         "memory": 512,
         "links": [],

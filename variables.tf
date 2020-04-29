@@ -40,21 +40,16 @@ variable "autoscale_min" {
 }
 
 variable "autoscale_max" {
-    default = "10"
+    default = "6"
     description = "Maximum autoscale (number of EC2)"
 }
 
 variable "autoscale_desired" {
-    default = "4"
+    default = "2"
     description = "Desired autoscale (number of EC2)"
 }
 
 
 variable "instance_type" {
     default = "t2.micro"
-}
-
-variable "ssh_pubkey_file" {
-    description = "Path to an SSH public key"
-    default = "~/.ssh/id_rsa.pub"
 }
