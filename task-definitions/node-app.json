@@ -1,7 +1,7 @@
 [
     {
         "name": "node-app",
-        "image": "node:10-alpine",
+        "image": "raja678/node-app:1.0",
         "cpu": 10,
         "memory": 512,
         "links": [],
