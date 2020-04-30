@@ -1,7 +1,7 @@
 [
     {
         "name": "node-app",
-        "image": "raja678/tomcat:1.0",
+        "image": "node:10-alpine",
         "cpu": 10,
         "memory": 512,
         "links": [],
