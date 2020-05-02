@@ -20,6 +20,13 @@ services with it.
 $ terraform init
 $ terraform apply -var="aws_access_key=<AWS_ACCESS_KEY_ID>" -var="aws_secret_key=<SECRET_ACCESS_KEY>"
 ```
+### Using Jenkins (version 2.234) to run the terraform
+
+* Store the following in Jenkins credentials:- 1) aws_access_key_id (Credential type: secret text): AWS_ACCESS_KEY_ID 2) aws_access_key (Credential type: secret text): AWS_ACCESS_SECRET_KEY
+
+* Select the Terraform Command to run during the Jenkins build job 
+
+* Username 'jenkins' should be in sudoers to obtain lock on the terraform statefile stored in the local backend
 
 ## Deploying
 
