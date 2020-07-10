@@ -1,3 +1,4 @@
+mirrored from https://github.com/alex/ecs-terraform
 # ECS + Terraform
 
 This repo contains a set of [Terraform](https://terraform.io/) modules for
@@ -15,7 +16,7 @@ services with it.
 
 ## Creating the cluster and service
 
-* Install Terroform on the local machine and follow the steps below (you must pass AWS_ACCESS_KEY_ID and SECRET_ACCESS_KEY). It is recommended to run `terraform plan` before `terraform apply`
+* Install Terraform on the local machine and follow the steps below (you must pass AWS_ACCESS_KEY_ID and SECRET_ACCESS_KEY). It is recommended to run `terraform plan` before `terraform apply`
 ```
 $ terraform init
 $ terraform apply -var="aws_access_key=<AWS_ACCESS_KEY_ID>" -var="aws_secret_key=<SECRET_ACCESS_KEY>"
