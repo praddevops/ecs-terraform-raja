@@ -1,0 +1,22 @@
+[
+    {
+        "name": "petstore3",
+        "image": "raja678/petstore3:1.0",
+        "cpu": 10,
+        "memory": 512,
+        "links": [],
+        "portMappings": [
+            {
+                "containerPort": 8080,
+                "hostPort": 8080,
+                "protocol": "tcp"
+            }
+        ],
+        "essential": true,
+        "entryPoint": [],
+        "command": [],
+        "environment": [],
+        "mountPoints": [],
+        "volumesFrom": []
+    }
+]
